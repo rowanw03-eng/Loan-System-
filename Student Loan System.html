@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Laptop Day Loan System - Available Day Loans</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Firebase 11.6.1 SDK imports for Cross-Device Synchronization -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        window.FirebaseModule = { initializeApp, getAuth, signInAnonymously, getFirestore, doc, onSnapshot, setDoc };
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+        :root {
+            --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        /* Golden Night Liquid Gold Theme */
+        body.theme-golden {
+            background-color: #0b0a07;
+            color: #f3f0e6;
+        }
+
+        .theme-golden .gold-glow {
+            box-shadow: 0 0 25px rgba(234, 179, 8, 0.25);
+        }
+
+        .theme-golden .gold-card {
+            background: linear-gradient(135deg, rgba(28, 25, 20, 0.85) 0%, rgba(18, 16, 12, 0.95) 100%);
+            border: 1px solid rgba(234, 179, 8, 0.2);
+            backdrop-filter: blur(16px);
+        }
+
+        .theme-golden .gold-card:hover {
+            border-color: rgba(234, 179, 8, 0.5);
+        }
+
+        /* Fluid GPU-Accelerated Liquid Gold Animation Background */
+        .liquid-gold-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+            opacity: 0.65;
+        }
+
+        .liquid-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            will-change: transform, opacity;
+            transform: translate3d(0, 0, 0);
+        }
+
+        .orb-1 {
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, rgba(234, 179, 8, 0.28) 0%, rgba(202, 138, 4, 0) 70%);
+            top: -10vw;
+            left: -10vw;
+            animation: floatOrb1 18s ease-in-out infinite alternate;
+        }
+
+        .orb-2 {
+            width: 45vw;
+            height: 45vw;
+            background: radial-gradient(circle, rgba(217, 119, 6, 0.22) 0%, rgba(180, 83, 9, 0) 70%);
+            bottom: -10vw;
+            right: -10vw;
+            animation: floatOrb2 22s ease-in-out infinite alternate;
+        }
+
+        .orb-3 {
+            width: 35vw;
+            height: 35vw;
+            background: radial-gradient(circle, rgba(250, 204, 21, 0.15) 0%, rgba(161, 98, 7, 0) 70%);
+            top: 30%;
+            left: 40%;
+            animation: floatOrb3 15s ease-in-out infinite alternate;
+        }
+
+        @keyframes floatOrb1 {
+            0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.7; }
+            100% { transform: translate3d(12vw, 15vh, 0) scale(1.15); opacity: 0.9; }
+        }
+        @keyframes floatOrb2 {
+            0% { transform: translate3d(0, 0, 0) scale(1.1); opacity: 0.6; }
+            100% { transform: translate3d(-15vw, -12vh, 0) scale(0.95); opacity: 0.85; }
+        }
+        @keyframes floatOrb3 {
+            0% { transform: translate3d(0, 0, 0) scale(0.9); opacity: 0.5; }
+            100% { transform: translate3d(8vw, -10vh, 0) scale(1.2); opacity: 0.8; }
+        }
+
+        /* Cyberpunk Theme */
+        body.theme-cyberpunk {
+            background-color: #090314;
+            color: #00f0ff;
+        }
+        .theme-cyberpunk .gold-card {
+            background: rgba(15, 7, 32, 0.9);
+            border: 1px solid rgba(255, 0, 127, 0.4);
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.15);
+        }
+
+        /* Modern Dark Theme */
+        body.theme-dark {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .theme-dark .gold-card {
+            background: rgba(30, 41, 59, 0.85);
+            border: 1px solid rgba(51, 65, 85, 0.8);
+        }
+
+        /* Clean Light Theme */
+        body.theme-light {
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        .theme-light .gold-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+        .theme-light .liquid-gold-bg { display: none; }
+
+        /* Pulse Animation for Overdue */
+        @keyframes alertPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+        }
+        .overdue-pulse {
+            animation: alertPulse 1.8s infinite;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(234, 179, 8, 0.3);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(234, 179, 8, 0.6);
+        }
+    </style>
+</head>
+<body class="theme-golden h-full flex flex-col antialiased selection:bg-amber-500 selection:text-black">
+
+    <!-- Background Liquid Gold Orbs -->
+    <div class="liquid-gold-bg" id="liquidBg">
+        <div class="liquid-orb orb-1"></div>
+        <div class="liquid-orb orb-2"></div>
+        <div class="liquid-orb orb-3"></div>
+    </div>
+
+    <div class="relative z-10 flex flex-col flex-1 min-h-screen">
+
+        <header id="adminHeader" class="border-b border-amber-500/20 bg-black/40 backdrop-blur-xl sticky top-0 z-40 px-4 py-3 sm:px-6 transition-all">
+            <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+                
+                <!-- Logo & System Title -->
+                <div class="flex items-center gap-3 w-full md:w-auto justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                            <i data-lucide="laptop" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h1 class="font-extrabold text-lg sm:text-xl tracking-tight flex items-center gap-2">
+                                Laptop Tracker
+                                <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono font-medium border border-amber-500/30">Day Loan</span>
+                            </h1>
+                            <p class="text-xs text-zinc-400 font-medium">Automated 3:20 PM Check-In & Multi-Device Sync</p>
+                        </div>
+                    </div>
+
+                    <!-- Available Day Loans Display Switcher (Mobile) -->
+                    <a href="?mode=kiosk" target="_blank" id="launchKioskBtn" class="md:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 text-xs font-semibold transition">
+                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                        Available Loans
+                    </a>
+                </div>
+
+                <!-- Center Controls: Time Switcher, Sync Indicator, & Theme Switcher -->
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-center md:justify-end">
+                    
+                    <!-- Multi-Device Sync Status Indicator Button -->
+                    <button onclick="openSyncModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/80 border border-zinc-800 text-xs font-medium hover:border-amber-500/40 transition">
+                        <span id="syncStatusDot" class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                        <span id="syncStatusText" class="text-zinc-300">Local Sync</span>
+                        <i data-lucide="wifi" class="w-3.5 h-3.5 text-zinc-400"></i>
+                    </button>
+
+                    <!-- Time Override Engine -->
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/80 border border-zinc-800 text-xs font-mono">
+                        <i data-lucide="clock" class="w-4 h-4 text-amber-400"></i>
+                        <span id="currentTimeDisplay" class="text-zinc-200 font-bold">14:15:00</span>
+                        
+                        <div class="h-4 w-px bg-zinc-800 mx-1"></div>
+                        
+                        <select id="timeSimSelect" class="bg-black/50 text-amber-300 rounded px-2 py-1 text-xs border border-zinc-700 focus:outline-none focus:border-amber-500">
+                            <option value="REAL">Real Time</option>
+                            <option value="15:10">3:10 PM (Normal)</option>
+                            <option value="15:19">3:19 PM (Near Due)</option>
+                            <option value="15:25" selected>3:25 PM (Overdue!)</option>
+                            <option value="16:00">4:00 PM (Late Alert)</option>
+                        </select>
+                    </div>
+
+                    <!-- Theme Selector -->
+                    <div class="flex items-center gap-1 bg-zinc-900/80 p-1 rounded-xl border border-zinc-800">
+                        <button onclick="setTheme('golden')" class="p-1.5 rounded-lg text-amber-400 hover:bg-amber-500/20" title="Golden Night Theme">
+                            <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="setTheme('cyberpunk')" class="p-1.5 rounded-lg text-pink-400 hover:bg-pink-500/20" title="Cyberpunk Theme">
+                            <i data-lucide="zap" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="setTheme('dark')" class="p-1.5 rounded-lg text-slate-300 hover:bg-slate-700/50" title="Modern Dark">
+                            <i data-lucide="moon" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="setTheme('light')" class="p-1.5 rounded-lg text-amber-600 hover:bg-amber-100" title="Clean Light">
+                            <i data-lucide="sun" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                    <!-- Launch Available Day Loans (New Tab Button) -->
+                    <a href="?mode=kiosk" target="_blank" class="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 text-xs font-semibold transition">
+                        <i data-lucide="monitor-play" class="w-4 h-4"></i>
+                        Launch Available Day Loans
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Overdue Warning Banner -->
+        <div id="overdueAlertBanner" class="hidden bg-gradient-to-r from-red-600 via-rose-600 to-red-600 text-white px-4 py-2.5 shadow-lg border-b border-red-400/40 animate-pulse">
+            <div class="max-w-7xl mx-auto flex items-center justify-between gap-3 text-xs sm:text-sm font-semibold">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-300 flex-shrink-0"></i>
+                    <span>3:20 PM OVERDUE ALERT: <span id="overdueCountText">0</span> laptop(s) currently unreturned past official cutoff time!</span>
+                </div>
+                <button onclick="scrollToGrid()" class="underline font-bold text-yellow-200 hover:text-white text-xs">View Unreturned Laptops &rarr;</button>
+            </div>
+        </div>
+
+        <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+
+            <div id="adminTabNav" class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-zinc-800 pb-4">
+                <div class="flex items-center gap-2 bg-zinc-900/90 p-1.5 rounded-2xl border border-zinc-800">
+                    <button id="tabBtnFleet" onclick="switchTab('fleet')" class="px-5 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition bg-amber-500 text-black shadow-md">
+                        <i data-lucide="grid" class="w-4 h-4"></i> Fleet Management
+                    </button>
+                    <button id="tabBtnHistory" onclick="switchTab('history')" class="px-5 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition text-zinc-400 hover:text-white hover:bg-zinc-800">
+                        <i data-lucide="file-text" class="w-4 h-4"></i> Loan History & Logs
+                    </button>
+                </div>
+
+                <!-- Stats Summary Pill -->
+                <div class="flex items-center gap-4 text-xs font-medium text-zinc-400">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+                        <span>Available: <strong id="statAvailable" class="text-white">20</strong></span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span>
+                        <span>Loaned: <strong id="statLoaned" class="text-white">0</strong></span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span>
+                        <span>Overdue: <strong id="statOverdue" class="text-red-400">0</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 1: FLEET GRID & CHECKOUT SECTION -->
+            <section id="fleetView" class="space-y-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold tracking-tight text-amber-200">Laptop Fleet Inventory</h2>
+                        <p class="text-xs text-zinc-400">Select any available laptop to issue a loan, or click a loaned unit to perform a return.</p>
+                    </div>
+                    <button onclick="resetAllLoansConfirm()" class="text-xs px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition">
+                        Reset Fleet Data
+                    </button>
+                </div>
+
+                <!-- Fleet Cards Container (20 Laptops Grid) -->
+                <div id="laptopGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <!-- Dynamic rendering via JavaScript -->
+                </div>
+            </section>
+
+            <!-- VIEW 2: LOAN HISTORY & LOGS -->
+            <section id="historyView" class="hidden space-y-6">
+                <div class="gold-card p-6 rounded-2xl space-y-6">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-amber-200">Loan Audit Logs</h2>
+                            <p class="text-xs text-zinc-400">Comprehensive history logs, check-out times, returns, and overdue tracking.</p>
+                        </div>
+
+                        <!-- Date Preset Buttons & Export -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button onclick="applyDatePreset('today')" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-xs hover:bg-zinc-700 text-zinc-300 font-medium">Today</button>
+                            <button onclick="applyDatePreset('yesterday')" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-xs hover:bg-zinc-700 text-zinc-300 font-medium">Yesterday</button>
+                            <button onclick="applyDatePreset('week')" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-xs hover:bg-zinc-700 text-zinc-300 font-medium">This Week</button>
+                            <button onclick="applyDatePreset('month')" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-xs hover:bg-zinc-700 text-zinc-300 font-medium">This Month</button>
+                            <button onclick="applyDatePreset('all')" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-xs hover:bg-zinc-700 text-zinc-300 font-medium">All Time</button>
+
+                            <button onclick="exportCSV()" class="ml-2 px-4 py-1.5 rounded-xl bg-amber-500 text-black text-xs font-bold hover:bg-amber-400 flex items-center gap-1.5 shadow-md">
+                                <i data-lucide="download" class="w-4 h-4"></i> Export CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Search & Filter Controls Bar -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-zinc-950/60 p-4 rounded-xl border border-zinc-800/80">
+                        <div>
+                            <label class="block text-xs font-medium text-zinc-400 mb-1">Search Student / Laptop</label>
+                            <input type="text" id="historySearchInput" oninput="renderHistoryTable()" placeholder="Name or Laptop #..." class="w-full bg-zinc-900 border border-zinc-700 text-xs text-zinc-200 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-zinc-400 mb-1">Start Date</label>
+                            <input type="date" id="startDatePicker" onchange="renderHistoryTable()" class="w-full bg-zinc-900 border border-zinc-700 text-xs text-zinc-200 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-zinc-400 mb-1">End Date</label>
+                            <input type="date" id="endDatePicker" onchange="renderHistoryTable()" class="w-full bg-zinc-900 border border-zinc-700 text-xs text-zinc-200 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-zinc-400 mb-1">Filter Status</label>
+                            <select id="statusFilter" onchange="renderHistoryTable()" class="w-full bg-zinc-900 border border-zinc-700 text-xs text-zinc-200 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500">
+                                <option value="ALL">All Statuses</option>
+                                <option value="Active">Active (Loaned)</option>
+                                <option value="Returned">Returned On Time</option>
+                                <option value="Overdue Returned">Returned Late</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- History Table -->
+                    <div class="overflow-x-auto rounded-xl border border-zinc-800">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead class="bg-zinc-900/90 text-zinc-400 uppercase font-mono border-b border-zinc-800">
+                                <tr>
+                                    <th class="p-3">Laptop #</th>
+                                    <th class="p-3">Student Full Name</th>
+                                    <th class="p-3">Year Group</th>
+                                    <th class="p-3">Check-Out Time</th>
+                                    <th class="p-3">Return Time</th>
+                                    <th class="p-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody" class="divide-y divide-zinc-800/60 font-medium">
+                                <!-- Dynamic Render -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 3: AVAILABLE DAY LOANS (PUBLIC DISPLAY) -->
+            <section id="kioskContainer" class="hidden space-y-6">
+                <!-- Available Day Loans Banner Header -->
+                <div class="gold-card p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></span>
+                            <h2 class="text-2xl sm:text-3xl font-extrabold text-amber-300 tracking-tight">AVAILABLE DAY LOANS</h2>
+                        </div>
+                        <p class="text-xs sm:text-sm text-zinc-400 mt-1">Live availability digital display. Synchronized live across all Wi-Fi network displays.</p>
+                    </div>
+
+                    <div class="flex items-center gap-6">
+                        <div class="text-center px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                            <p class="text-xs text-amber-400/80 font-bold uppercase">Available</p>
+                            <p id="kioskAvailableCount" class="text-3xl font-black text-amber-300">20 / 20</p>
+                        </div>
+                        <button onclick="toggleFullscreen()" class="p-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition" title="Toggle Fullscreen">
+                            <i data-lucide="maximize-2" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Available Day Loans Visual Grid -->
+                <div id="kioskFleetGrid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                    <!-- Dynamic items -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Issue Loan Modal Dialog -->
+        <div id="checkoutModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+            <div class="gold-card max-w-md w-full p-6 rounded-2xl space-y-6 border border-amber-500/30 shadow-2xl relative">
+                <button onclick="closeCheckoutModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+
+                <div>
+                    <h3 class="text-xl font-bold text-amber-300 flex items-center gap-2">
+                        <i data-lucide="user-plus" class="w-5 h-5 text-amber-400"></i>
+                        Issue Laptop Loan #<span id="modalLaptopNumber">0</span>
+                    </h3>
+                    <p class="text-xs text-zinc-400 mt-1">Please enter verified student credentials to complete issue.</p>
+                </div>
+
+                <form id="loanForm" onsubmit="handleLoanSubmit(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-300 mb-1">Student Full Name *</label>
+                        <input type="text" id="studentNameInput" required placeholder="e.g. Alexander Wright" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-300 mb-1">Year Group *</label>
+                        <select id="yearGroupInput" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
+                            <option value="">Select Year...</option>
+                            <option value="Year 7">Year 7</option>
+                            <option value="Year 8">Year 8</option>
+                            <option value="Year 9">Year 9</option>
+                            <option value="Year 10">Year 10</option>
+                            <option value="Year 11">Year 11</option>
+                            <option value="Year 12">Year 12</option>
+                        </select>
+                    </div>
+
+                    <div class="pt-2 flex items-center gap-3">
+                        <button type="button" onclick="closeCheckoutModal()" class="w-1/2 py-2.5 rounded-xl border border-zinc-700 text-zinc-300 font-semibold text-xs hover:bg-zinc-800">Cancel</button>
+                        <button type="submit" class="w-1/2 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs shadow-lg">Confirm Loan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Multi-Device Cross-WiFi Cloud Sync Modal -->
+        <div id="syncModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+            <div class="gold-card max-w-lg w-full p-6 rounded-2xl space-y-6 border border-amber-500/30 shadow-2xl relative">
+                <button onclick="closeSyncModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+
+                <div>
+                    <h3 class="text-xl font-bold text-amber-300 flex items-center gap-2">
+                        <i data-lucide="wifi" class="w-5 h-5 text-amber-400"></i>
+                        Multi-Device Wi-Fi & Cloud Sync
+                    </h3>
+                    <p class="text-xs text-zinc-400 mt-1">Synchronize live laptop loans across different TVs, iPads, and PCs on the same Wi-Fi network.</p>
+                </div>
+
+                <div class="space-y-4 text-xs">
+                    <div class="bg-amber-500/10 border border-amber-500/20 p-3.5 rounded-xl space-y-2">
+                        <div class="flex items-center justify-between font-bold text-amber-300">
+                            <span>Connection Mode</span>
+                            <span id="syncModeLabel" class="px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30">Local + Cloud Sync</span>
+                        </div>
+                        <p class="text-zinc-300">Local tab sync is active automatically using <code class="text-amber-400">BroadcastChannel</code>. To connect multiple separate devices on Wi-Fi, Cloud Sync is enabled below.</p>
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-zinc-300 mb-1">Shared Channel Name (Sync Group)</label>
+                        <input type="text" id="syncChannelNameInput" value="school-laptop-fleet-1" placeholder="e.g. school-laptop-fleet-1" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2 text-zinc-100 font-mono focus:outline-none focus:border-amber-500">
+                        <p class="text-[11px] text-zinc-500 mt-1">Set the same Channel Name on all devices (Admin tablet & Available Day Loans TV) to sync them together.</p>
+                    </div>
+
+                    <div class="pt-2 flex items-center justify-between gap-3">
+                        <button type="button" onclick="resetSyncChannel()" class="px-4 py-2 rounded-xl border border-zinc-700 text-zinc-300 font-semibold hover:bg-zinc-800">Use Default Channel</button>
+                        <button type="button" onclick="saveSyncSettings()" class="px-5 py-2 rounded-xl bg-amber-500 text-black font-bold hover:bg-amber-400">Save & Reconnect</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Notification Message Box -->
+        <div id="toastNotification" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+            <div class="bg-zinc-900 border border-amber-500/40 text-amber-200 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+                <i data-lucide="check-circle" class="w-5 h-5 text-amber-400"></i>
+                <span id="toastMessage" class="text-xs font-semibold">Action completed</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // System State Data Structure
+        const TOTAL_LAPTOPS = 20;
+        let laptops = []; 
+        let loanLogs = []; 
+        let currentTab = 'fleet';
+        let currentSimulatedTime = 'REAL'; 
+        let isKioskLockedMode = false;
+        let syncChannelName = localStorage.getItem('school_sync_channel') || 'school-laptop-fleet-1';
+        let isCloudConnected = false;
+
+        // BroadcastChannel for instant same-device cross-tab sync
+        const channel = new BroadcastChannel('laptop_loan_sync_channel');
+
+        // Firebase Cloud references
+        let db = null;
+        let auth = null;
+        let syncDocUnsubscribe = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            checkUrlMode();
+            loadStateFromStorage();
+            initLucideIcons();
+            startClockEngine();
+            setupLocalSyncListeners();
+            initializeCloudSync();
+            renderApp();
+        });
+
+        // Detect irreversible locked Available Day Loans mode query parameter
+        function checkUrlMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('mode') === 'kiosk') {
+                isKioskLockedMode = true;
+                document.getElementById('adminHeader').style.display = 'none';
+                document.getElementById('adminTabNav').style.display = 'none';
+                document.getElementById('historyView').style.display = 'none';
+                document.getElementById('fleetView').style.display = 'none';
+                document.getElementById('kioskContainer').classList.remove('hidden');
+            }
+        }
+
+        // Initialize state or fetch from localStorage
+        function loadStateFromStorage() {
+            const savedLaptops = localStorage.getItem('school_laptops_data');
+            const savedLogs = localStorage.getItem('school_laptops_logs');
+
+            if (savedLaptops) {
+                laptops = JSON.parse(savedLaptops);
+            } else {
+                laptops = Array.from({ length: TOTAL_LAPTOPS }, (_, i) => ({
+                    id: i + 1,
+                    status: 'available',
+                    studentName: '',
+                    yearGroup: '',
+                    checkoutTime: null
+                }));
+            }
+
+            if (savedLogs) {
+                loanLogs = JSON.parse(savedLogs);
+            }
+        }
+
+        function saveStateToStorage(pushToCloud = true) {
+            localStorage.setItem('school_laptops_data', JSON.stringify(laptops));
+            localStorage.setItem('school_laptops_logs', JSON.stringify(loanLogs));
+            
+            // Broadcast state update locally
+            channel.postMessage({ type: 'STATE_UPDATED' });
+
+            // Push to Cloud Firestore for cross-device Wi-Fi sync
+            if (pushToCloud && db) {
+                pushStateToCloud();
+            }
+        }
+
+        // Dual-Sync Engine: Local BroadcastChannel & Storage Event
+        function setupLocalSyncListeners() {
+            channel.onmessage = (event) => {
+                if (event.data && event.data.type === 'STATE_UPDATED') {
+                    loadStateFromStorage();
+                    renderApp();
+                }
+            };
+            window.addEventListener('storage', () => {
+                loadStateFromStorage();
+                renderApp();
+            });
+        }
+
+        // Dual-Sync Engine: Firestore Cross-Device Sync Setup
+        async function initializeCloudSync() {
+            try {
+                if (!window.FirebaseModule) {
+                    setTimeout(initializeCloudSync, 300);
+                    return;
+                }
+
+                const { initializeApp, getAuth, signInAnonymously, getFirestore, doc, onSnapshot } = window.FirebaseModule;
+
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'laptop-loan-app';
+                const firebaseConfig = typeof __firebase_config !== 'undefined' 
+                    ? JSON.parse(__firebase_config) 
+                    : {
+                        apiKey: "AIzaSyDemoConfigKeyForPublicSchoolApp",
+                        authDomain: "laptop-loan-system.firebaseapp.com",
+                        projectId: "laptop-loan-system",
+                        storageBucket: "laptop-loan-system.appspot.com",
+                        messagingSenderId: "102938475610",
+                        appId: "1:102938475610:web:d1e2f3a4b5c6d7e8"
+                    };
+
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                await signInAnonymously(auth);
+
+                const syncDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'fleet_sync', syncChannelName);
+
+                if (syncDocUnsubscribe) syncDocUnsubscribe();
+
+                syncDocUnsubscribe = onSnapshot(syncDocRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const data = snapshot.data();
+                        if (data && data.laptops) {
+                            laptops = data.laptops;
+                            if (data.logs) loanLogs = data.logs;
+
+                            localStorage.setItem('school_laptops_data', JSON.stringify(laptops));
+                            localStorage.setItem('school_laptops_logs', JSON.stringify(loanLogs));
+
+                            isCloudConnected = true;
+                            updateSyncStatusUI('Cloud & Local Live', 'bg-emerald-500');
+                            renderApp();
+                        }
+                    } else {
+                        pushStateToCloud();
+                    }
+                }, (error) => {
+                    console.warn('Cloud sync falling back to local BroadcastChannel:', error);
+                    isCloudConnected = false;
+                    updateSyncStatusUI('Local Sync Active', 'bg-amber-500');
+                });
+
+            } catch (err) {
+                console.warn('Cloud sync error, operating in Local Broadcast mode:', err);
+                isCloudConnected = false;
+                updateSyncStatusUI('Local Sync Active', 'bg-amber-500');
+            }
+        }
+
+        async function pushStateToCloud() {
+            if (!db) return;
+            try {
+                const { doc, setDoc } = window.FirebaseModule;
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'laptop-loan-app';
+                const syncDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'fleet_sync', syncChannelName);
+                
+                await setDoc(syncDocRef, {
+                    laptops: laptops,
+                    logs: loanLogs,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+
+                isCloudConnected = true;
+                updateSyncStatusUI('Cloud & Local Live', 'bg-emerald-500');
+            } catch (err) {
+                console.warn('Could not push to cloud, local storage updated:', err);
+            }
+        }
+
+        function updateSyncStatusUI(label, colorClass) {
+            const dot = document.getElementById('syncStatusDot');
+            const text = document.getElementById('syncStatusText');
+            if (dot && text) {
+                text.innerText = label;
+                dot.className = `w-2.5 h-2.5 rounded-full ${colorClass} animate-pulse`;
+            }
+        }
+
+        function openSyncModal() {
+            document.getElementById('syncChannelNameInput').value = syncChannelName;
+            document.getElementById('syncModal').classList.remove('hidden');
+        }
+
+        function closeSyncModal() {
+            document.getElementById('syncModal').classList.add('hidden');
+        }
+
+        function saveSyncSettings() {
+            const val = document.getElementById('syncChannelNameInput').value.trim();
+            if (val) {
+                syncChannelName = val;
+                localStorage.setItem('school_sync_channel', syncChannelName);
+                initializeCloudSync();
+                closeSyncModal();
+                showToast(`Connected to sync channel: ${syncChannelName}`);
+            }
+        }
+
+        function resetSyncChannel() {
+            syncChannelName = 'school-laptop-fleet-1';
+            document.getElementById('syncChannelNameInput').value = syncChannelName;
+            localStorage.setItem('school_sync_channel', syncChannelName);
+            initializeCloudSync();
+            closeSyncModal();
+            showToast('Reset to default sync channel');
+        }
+
+        function getEffectiveDate() {
+            const now = new Date();
+            if (currentSimulatedTime === 'REAL') {
+                return now;
+            }
+            const [hours, minutes] = currentSimulatedTime.split(':').map(Number);
+            const simDate = new Date(now);
+            simDate.setHours(hours, minutes, 0, 0);
+            return simDate;
+        }
+
+        function isPast320PM() {
+            const effective = getEffectiveDate();
+            const cutoff = new Date(effective);
+            cutoff.setHours(15, 20, 0, 0); // 3:20 PM
+            return effective >= cutoff;
+        }
+
+        function startClockEngine() {
+            const timeSelect = document.getElementById('timeSimSelect');
+            timeSelect.addEventListener('change', (e) => {
+                currentSimulatedTime = e.target.value;
+                updateClockDisplay();
+                renderApp();
+            });
+
+            setInterval(() => {
+                updateClockDisplay();
+                checkOverdueState();
+            }, 1000);
+        }
+
+        function updateClockDisplay() {
+            const effective = getEffectiveDate();
+            const hours = String(effective.getHours()).padStart(2, '0');
+            const minutes = String(effective.getMinutes()).padStart(2, '0');
+            const seconds = String(effective.getSeconds()).padStart(2, '0');
+            document.getElementById('currentTimeDisplay').innerText = `${hours}:${minutes}:${seconds}`;
+        }
+
+        function checkOverdueState() {
+            const overdue = isPast320PM();
+            const activeLoans = laptops.filter(l => l.status === 'loaned');
+            const alertBanner = document.getElementById('overdueAlertBanner');
+            const overdueCountText = document.getElementById('overdueCountText');
+
+            if (overdue && activeLoans.length > 0 && !isKioskLockedMode) {
+                alertBanner.classList.remove('hidden');
+                overdueCountText.innerText = activeLoans.length;
+            } else {
+                alertBanner.classList.add('hidden');
+            }
+        }
+
+        function renderApp() {
+            const overdue = isPast320PM();
+            const availableCount = laptops.filter(l => l.status === 'available').length;
+            const loanedCount = laptops.filter(l => l.status === 'loaned').length;
+
+            // Stat pills
+            document.getElementById('statAvailable').innerText = availableCount;
+            document.getElementById('statLoaned').innerText = loanedCount;
+            document.getElementById('statOverdue').innerText = overdue ? loanedCount : 0;
+
+            if (isKioskLockedMode) {
+                renderKioskView(availableCount);
+            } else {
+                renderFleetGrid(overdue);
+                renderHistoryTable();
+            }
+            initLucideIcons();
+        }
+
+        function renderFleetGrid(isOverdue) {
+            const grid = document.getElementById('laptopGrid');
+            grid.innerHTML = '';
+
+            laptops.forEach(laptop => {
+                const isLoaned = laptop.status === 'loaned';
+                const cardOverdue = isLoaned && isOverdue;
+
+                const card = document.createElement('div');
+                card.className = `gold-card p-4 rounded-2xl flex flex-col justify-between transition-all duration-300 relative overflow-hidden group cursor-pointer ${
+                    cardOverdue ? 'border-red-500/80 overdue-pulse bg-red-950/20' : ''
+                }`;
+
+                card.onclick = () => handleLaptopClick(laptop.id);
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-mono font-bold px-2 py-0.5 rounded-lg ${
+                                isLoaned ? (cardOverdue ? 'bg-red-500/30 text-red-300' : 'bg-blue-500/30 text-blue-300') : 'bg-emerald-500/30 text-emerald-300'
+                            }">#${laptop.id.toString().padStart(2, '0')}</span>
+                        </div>
+                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                            isLoaned ? (cardOverdue ? 'bg-red-500 text-white animate-bounce' : 'bg-blue-500/20 text-blue-400') : 'bg-emerald-500/20 text-emerald-400'
+                        }">
+                            ${isLoaned ? (cardOverdue ? 'OVERDUE' : 'LOANED') : 'AVAILABLE'}
+                        </span>
+                    </div>
+
+                    <div class="my-2 flex justify-center py-2">
+                        <i data-lucide="laptop" class="w-10 h-10 ${
+                            isLoaned ? (cardOverdue ? 'text-red-400' : 'text-blue-400') : 'text-emerald-400'
+                        }"></i>
+                    </div>
+
+                    <div class="mt-2 pt-2 border-t border-zinc-800/80">
+                        ${isLoaned ? `
+                            <p class="text-xs font-bold text-zinc-100 truncate">${laptop.studentName}</p>
+                            <p class="text-[11px] text-zinc-400">${laptop.yearGroup}</p>
+                            <p class="text-[10px] text-zinc-500 font-mono mt-1">Checked out: ${laptop.checkoutTime}</p>
+                        ` : `
+                            <p class="text-xs text-zinc-400 italic">Ready for issue</p>
+                            <p class="text-[10px] text-amber-400 font-medium mt-1 group-hover:underline">Click to Loan &rarr;</p>
+                        `}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderKioskView(availableCount) {
+            document.getElementById('kioskAvailableCount').innerText = `${availableCount} / ${TOTAL_LAPTOPS}`;
+            const kioskGrid = document.getElementById('kioskFleetGrid');
+            kioskGrid.innerHTML = '';
+
+            laptops.forEach(laptop => {
+                const isAvailable = laptop.status === 'available';
+                const div = document.createElement('div');
+                div.className = `p-6 rounded-2xl border text-center transition-all ${
+                    isAvailable ? 'bg-emerald-950/20 border-emerald-500/40 text-emerald-200' : 'bg-zinc-900/60 border-zinc-800 text-zinc-500 opacity-60'
+                }`;
+
+                div.innerHTML = `
+                    <div class="text-xs font-mono font-bold mb-2">LAPTOP #${laptop.id.toString().padStart(2, '0')}</div>
+                    <i data-lucide="laptop" class="w-12 h-12 mx-auto my-3 ${isAvailable ? 'text-emerald-400' : 'text-zinc-600'}"></i>
+                    <div class="text-sm font-black uppercase tracking-wider ${isAvailable ? 'text-emerald-400' : 'text-zinc-500'}">
+                        ${isAvailable ? 'AVAILABLE' : 'IN USE'}
+                    </div>
+                `;
+                kioskGrid.appendChild(div);
+            });
+        }
+
+        let activeSelectedLaptopId = null;
+
+        function handleLaptopClick(laptopId) {
+            const laptop = laptops.find(l => l.id === laptopId);
+            if (!laptop) return;
+
+            if (laptop.status === 'available') {
+                activeSelectedLaptopId = laptopId;
+                document.getElementById('modalLaptopNumber').innerText = laptopId;
+                document.getElementById('studentNameInput').value = '';
+                document.getElementById('yearGroupInput').value = '';
+                document.getElementById('checkoutModal').classList.remove('hidden');
+            } else {
+                // Perform Return
+                const effectiveTime = getEffectiveDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const wasOverdue = isPast320PM();
+
+                loanLogs.unshift({
+                    id: laptop.id,
+                    studentName: laptop.studentName,
+                    yearGroup: laptop.yearGroup,
+                    checkoutTime: laptop.checkoutTime,
+                    returnTime: effectiveTime,
+                    date: new Date().toISOString().split('T')[0],
+                    status: wasOverdue ? 'Overdue Returned' : 'Returned'
+                });
+
+                laptop.status = 'available';
+                laptop.studentName = '';
+                laptop.yearGroup = '';
+                laptop.checkoutTime = null;
+
+                saveStateToStorage();
+                renderApp();
+                showToast(`Laptop #${laptopId} successfully returned!`);
+            }
+        }
+
+        function closeCheckoutModal() {
+            document.getElementById('checkoutModal').classList.add('hidden');
+        }
+
+        function handleLoanSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('studentNameInput').value.trim();
+            const year = document.getElementById('yearGroupInput').value;
+
+            if (!name || !year || !activeSelectedLaptopId) return;
+
+            const laptop = laptops.find(l => l.id === activeSelectedLaptopId);
+            if (laptop) {
+                const effectiveTime = getEffectiveDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                laptop.status = 'loaned';
+                laptop.studentName = name;
+                laptop.yearGroup = year;
+                laptop.checkoutTime = effectiveTime;
+
+                loanLogs.unshift({
+                    id: laptop.id,
+                    studentName: name,
+                    yearGroup: year,
+                    checkoutTime: effectiveTime,
+                    returnTime: 'Active',
+                    date: new Date().toISOString().split('T')[0],
+                    status: 'Active'
+                });
+
+                saveStateToStorage();
+                closeCheckoutModal();
+                renderApp();
+                showToast(`Laptop #${laptop.id} issued to ${name}`);
+            }
+        }
+
+        function renderHistoryTable() {
+            const tbody = document.getElementById('historyTableBody');
+            if (!tbody) return;
+
+            const search = document.getElementById('historySearchInput').value.toLowerCase();
+            const startDate = document.getElementById('startDatePicker').value;
+            const endDate = document.getElementById('endDatePicker').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            const filteredLogs = loanLogs.filter(log => {
+                const matchesSearch = log.studentName.toLowerCase().includes(search) || log.id.toString().includes(search);
+                const matchesStatus = statusFilter === 'ALL' || log.status === statusFilter;
+                
+                let matchesDate = true;
+                if (startDate && log.date < startDate) matchesDate = false;
+                if (endDate && log.date > endDate) matchesDate = false;
+
+                return matchesSearch && matchesStatus && matchesDate;
+            });
+
+            tbody.innerHTML = '';
+
+            if (filteredLogs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-zinc-500">No matching loan logs found.</td></tr>`;
+                return;
+            }
+
+            filteredLogs.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-zinc-800/40 transition';
+                
+                let statusBadge = `<span class="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[10px]">Active</span>`;
+                if (log.status === 'Returned') statusBadge = `<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px]">Returned</span>`;
+                if (log.status === 'Overdue Returned') statusBadge = `<span class="px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 text-[10px]">Returned Late</span>`;
+
+                tr.innerHTML = `
+                    <td class="p-3 font-mono font-bold text-amber-300">#${log.id.toString().padStart(2, '0')}</td>
+                    <td class="p-3 font-semibold text-zinc-100">${log.studentName}</td>
+                    <td class="p-3 text-zinc-400">${log.yearGroup}</td>
+                    <td class="p-3 font-mono text-zinc-300">${log.checkoutTime}</td>
+                    <td class="p-3 font-mono text-zinc-300">${log.returnTime}</td>
+                    <td class="p-3">${statusBadge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function applyDatePreset(preset) {
+            const today = new Date().toISOString().split('T')[0];
+            const startInput = document.getElementById('startDatePicker');
+            const endInput = document.getElementById('endDatePicker');
+
+            if (preset === 'today') {
+                startInput.value = today;
+                endInput.value = today;
+            } else if (preset === 'yesterday') {
+                const y = new Date();
+                y.setDate(y.getDate() - 1);
+                startInput.value = y.toISOString().split('T')[0];
+                endInput.value = y.toISOString().split('T')[0];
+            } else if (preset === 'week') {
+                const w = new Date();
+                w.setDate(w.getDate() - 7);
+                startInput.value = w.toISOString().split('T')[0];
+                endInput.value = today;
+            } else if (preset === 'month') {
+                const m = new Date();
+                m.setMonth(m.getMonth() - 1);
+                startInput.value = m.toISOString().split('T')[0];
+                endInput.value = today;
+            } else if (preset === 'all') {
+                startInput.value = '';
+                endInput.value = '';
+            }
+            renderHistoryTable();
+        }
+
+        function exportCSV() {
+            if (loanLogs.length === 0) {
+                showToast('No loan history available to export');
+                return;
+            }
+
+            const headers = ['Laptop ID', 'Student Name', 'Year Group', 'Check-Out Time', 'Return Time', 'Date', 'Status'];
+            const rows = loanLogs.map(l => [l.id, `"${l.studentName}"`, l.yearGroup, l.checkoutTime, l.returnTime, l.date, l.status]);
+            const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', `Laptop_Loan_History_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            const btnFleet = document.getElementById('tabBtnFleet');
+            const btnHistory = document.getElementById('tabBtnHistory');
+            const viewFleet = document.getElementById('fleetView');
+            const viewHistory = document.getElementById('historyView');
+
+            if (tab === 'fleet') {
+                viewFleet.classList.remove('hidden');
+                viewHistory.classList.add('hidden');
+                btnFleet.className = 'px-5 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition bg-amber-500 text-black shadow-md';
+                btnHistory.className = 'px-5 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition text-zinc-400 hover:text-white hover:bg-zinc-800';
+            } else {
+                viewFleet.classList.add('hidden');
+                viewHistory.classList.remove('hidden');
+                btnHistory.className = 'px-5 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition bg-amber-500 text-black shadow-md';
+                btnFleet.className = 'px-5 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition text-zinc-400 hover:text-white hover:bg-zinc-800';
+            }
+        }
+
+        function setTheme(theme) {
+            document.body.className = `theme-${theme} h-full flex flex-col antialiased selection:bg-amber-500 selection:text-black`;
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toastNotification');
+            document.getElementById('toastMessage').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function resetAllLoansConfirm() {
+            if (confirm('Are you sure you want to reset all laptop loans to AVAILABLE status?')) {
+                laptops.forEach(l => {
+                    l.status = 'available';
+                    l.studentName = '';
+                    l.yearGroup = '';
+                    l.checkoutTime = null;
+                });
+                saveStateToStorage();
+                renderApp();
+                showToast('All laptops reset to available');
+            }
+        }
+
+        function scrollToGrid() {
+            document.getElementById('laptopGrid').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        function initLucideIcons() {
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        }
+    </script>
+</body>
+</html>
